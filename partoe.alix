@@ -1,0 +1,3 @@
+project_name = Partoe
+source_dir = .
+depend = { project = GCS version = any }
