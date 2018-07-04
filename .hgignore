@@ -1,0 +1,9 @@
+syntax: glob
+*.o
+*.ali
+*~
+b~*.ad[bs]
+xml-test_driver
+build/*
+gnatinspect.db
+gnatinspect.db-journal
