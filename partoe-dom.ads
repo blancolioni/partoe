@@ -1,7 +1,7 @@
 private with Ada.Containers.Vectors;
 private with Ada.Strings.Unbounded;
 
-package DOM is
+package Partoe.DOM is
 
    type Root_Partoe_Element is abstract tagged private;
 
@@ -91,4 +91,4 @@ private
 
    type Root_Partoe_Document is new Root_Partoe_Node with null record;
 
-end DOM;
+end Partoe.DOM;

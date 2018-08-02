@@ -2,7 +2,7 @@ with Ada.Strings.Fixed;
 
 with Partoe;
 
-package body DOM is
+package body Partoe.DOM is
 
    type Partoe_Doc_Loader is
      new Partoe.Partoe_Document with
@@ -322,4 +322,4 @@ package body DOM is
       return Ada.Strings.Unbounded.To_String (Element.Text);
    end Text;
 
-end DOM;
+end Partoe.DOM;
