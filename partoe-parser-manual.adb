@@ -101,7 +101,8 @@ package body Partoe.Parser.Manual is
         and then Current_Line
         (Line_Index .. Line_Index + Match'Length - 1) = Match
       then
-         Line_Index := Line_Index + Match'Length - 1;
+         Line_Index := Line_Index + Match'Length;
+         Current_Char := Current_Line (Line_Index);
          return True;
       else
          return False;
