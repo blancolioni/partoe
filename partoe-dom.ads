@@ -7,18 +7,30 @@ package Partoe.DOM is
 
    type Partoe_Element is access all Root_Partoe_Element'Class;
 
-   function Name (Element : Root_Partoe_Element) return String;
-   function Text (Element : Root_Partoe_Element) return String;
+   function Name (Element : Root_Partoe_Element'Class) return String;
+   function Text (Element : Root_Partoe_Element'Class) return String;
+   function Has_Name (Element : Root_Partoe_Element'Class;
+                      Name    : String)
+                      return Boolean;
 
    type Root_Partoe_Attribute is new Root_Partoe_Element with private;
 
    type Partoe_Attribute is access all Root_Partoe_Attribute'Class;
+
+   function Create_Attribute
+     (Name  : String;
+      Value : String)
+      return Partoe_Attribute;
 
    type Root_Partoe_Node is new Root_Partoe_Element with private;
 
    type Partoe_Node is access all Root_Partoe_Node'Class;
 
    type Array_Of_Partoe_Nodes is array (Positive range <>) of Partoe_Node;
+
+   function Create
+     (Name : String)
+      return Partoe_Node;
 
    function Child_Count (Element : Root_Partoe_Node) return Natural;
    function Child (Element : Root_Partoe_Node;
@@ -35,6 +47,14 @@ package Partoe.DOM is
    function Children (Element : Root_Partoe_Node)
                       return Array_Of_Partoe_Nodes;
 
+   procedure Append
+     (Node  : not null access Root_Partoe_Node;
+      Child : Partoe_Node);
+
+   procedure Append
+     (Node      : not null access Root_Partoe_Node;
+      Attribute : Partoe_Attribute);
+
    function Attribute_Count (Element : Root_Partoe_Node) return Natural;
 
    function Has_Attribute
@@ -50,6 +70,18 @@ package Partoe.DOM is
                        Name    : String)
                        return Partoe_Attribute;
 
+   function Attribute
+     (Node          : Root_Partoe_Node;
+      Name          : String)
+      return String
+     with Pre => Node.Has_Attribute (Name);
+
+   function Attribute
+     (Node          : Root_Partoe_Node;
+      Name          : String;
+      Default_Value : String)
+      return String;
+
    function Select_Node (Element : not null access Root_Partoe_Node;
                          Path    : String)
                          return Partoe_Node;
@@ -57,6 +89,13 @@ package Partoe.DOM is
    function Select_Nodes (Element : not null access Root_Partoe_Node;
                           Path    : String)
                           return Array_Of_Partoe_Nodes;
+
+   function Outer_XML (Node : not null access Root_Partoe_Node) return String;
+
+   procedure Iterate
+     (Root : not null access Root_Partoe_Node'Class;
+      Process : not null access
+        procedure (Node : Partoe_Node));
 
    type Root_Partoe_Document is new Root_Partoe_Node with private;
 
@@ -74,10 +113,10 @@ private
 
    type Root_Partoe_Element is abstract tagged
       record
-         Line : Natural;
-         Col  : Natural;
-         Name : Ada.Strings.Unbounded.Unbounded_String;
-         Text : Ada.Strings.Unbounded.Unbounded_String;
+         Line         : Natural;
+         Col          : Natural;
+         Element_Name : Ada.Strings.Unbounded.Unbounded_String;
+         Element_Text : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    type Root_Partoe_Attribute is new Root_Partoe_Element with null record;

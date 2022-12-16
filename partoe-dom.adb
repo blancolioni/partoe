@@ -1,4 +1,4 @@
-with Ada.Strings.Fixed;
+with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
 with Partoe;
 
@@ -28,6 +28,38 @@ package body Partoe.DOM is
      (Document : in out Partoe_Doc_Loader;
       Text     : in     String);
 
+   function Has_Name (Element : Root_Partoe_Element'Class;
+                      Name    : String)
+                      return Boolean
+   is (Ada.Strings.Fixed.Equal_Case_Insensitive
+       (Left  => Element.Name,
+        Right => Name));
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Node  : not null access Root_Partoe_Node;
+      Child : Partoe_Node)
+   is
+   begin
+      Child.Parent := Partoe_Node (Node);
+      Node.Child_Nodes.Append (Child);
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Node      : not null access Root_Partoe_Node;
+      Attribute : Partoe_Attribute)
+   is
+   begin
+      Node.Attributes.Append (Attribute);
+   end Append;
+
    ---------------
    -- Attribute --
    ---------------
@@ -50,7 +82,6 @@ package body Partoe.DOM is
       Name    : String)
       return Partoe_Attribute
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
    begin
       for Attribute of Element.Attributes loop
          if Attribute.Name = Name then
@@ -58,6 +89,37 @@ package body Partoe.DOM is
          end if;
       end loop;
       return null;
+   end Attribute;
+
+   ---------------
+   -- Attribute --
+   ---------------
+
+   function Attribute
+     (Node          : Root_Partoe_Node;
+      Name          : String)
+      return String
+   is
+   begin
+      return Node.Attribute (Name, "");
+   end Attribute;
+
+   ---------------
+   -- Attribute --
+   ---------------
+
+   function Attribute
+     (Node          : Root_Partoe_Node;
+      Name          : String;
+      Default_Value : String)
+      return String
+   is
+   begin
+      if Node.Has_Attribute (Name) then
+         return Node.Attribute (Name).Text;
+      else
+         return Default_Value;
+      end if;
    end Attribute;
 
    ---------------------
@@ -91,10 +153,9 @@ package body Partoe.DOM is
       Name    : String)
       return Partoe_Node
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
    begin
       for Child of Element.Children loop
-         if Child.Name = Name then
+         if Child.Has_Name (Name) then
             return Child;
          end if;
       end loop;
@@ -119,12 +180,11 @@ package body Partoe.DOM is
       Name    : String)
       return Array_Of_Partoe_Nodes
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
       Count  : Natural := 0;
       Result : Array_Of_Partoe_Nodes (1 .. Element.Child_Nodes.Last_Index);
    begin
       for Child of Element.Children loop
-         if Child.Name = Name then
+         if Child.Has_Name (Name) then
             Count := Count + 1;
             Result (Count) := Child;
          end if;
@@ -148,6 +208,43 @@ package body Partoe.DOM is
       return Result;
    end Children;
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Name : String)
+      return Partoe_Node
+   is
+   begin
+      return Node : constant Partoe_Node := new Root_Partoe_Node'
+        (Line         => 0,
+         Col          => 0,
+         Element_Name => Ada.Strings.Unbounded.To_Unbounded_String (Name),
+         Element_Text => Ada.Strings.Unbounded.Null_Unbounded_String,
+         Parent       => null,
+         Attributes   => <>,
+         Child_Nodes  => <>);
+   end Create;
+
+   ----------------------
+   -- Create_Attribute --
+   ----------------------
+
+   function Create_Attribute
+     (Name  : String;
+      Value : String)
+      return Partoe_Attribute
+   is
+   begin
+      return Attribute : constant Partoe_Attribute :=
+        new Root_Partoe_Attribute'
+          (Line         => 0,
+           Col          => 0,
+           Element_Name => Ada.Strings.Unbounded.To_Unbounded_String (Name),
+           Element_Text => Ada.Strings.Unbounded.To_Unbounded_String (Value));
+   end Create_Attribute;
+
    -------------------
    -- Has_Attribute --
    -------------------
@@ -157,15 +254,30 @@ package body Partoe.DOM is
       Name    : String)
       return Boolean
    is
-      use type Ada.Strings.Unbounded.Unbounded_String;
    begin
       for Attr of Element.Attributes loop
-         if Attr.Name = Name then
+         if Attr.Has_Name (Name) then
             return True;
          end if;
       end loop;
       return False;
    end Has_Attribute;
+
+   -------------
+   -- Iterate --
+   -------------
+
+   procedure Iterate
+     (Root    : not null access Root_Partoe_Node'Class;
+      Process : not null access
+        procedure (Node : Partoe_Node))
+   is
+   begin
+      Process (Partoe_Node (Root));
+      for Child of Root.Children loop
+         Iterate (Child, Process);
+      end loop;
+   end Iterate;
 
    ----------
    -- Load --
@@ -186,9 +298,9 @@ package body Partoe.DOM is
    -- Name --
    ----------
 
-   function Name (Element : Root_Partoe_Element) return String is
+   function Name (Element : Root_Partoe_Element'Class) return String is
    begin
-      return Ada.Strings.Unbounded.To_String (Element.Name);
+      return Ada.Strings.Unbounded.To_String (Element.Element_Name);
    end Name;
 
    ------------------
@@ -218,8 +330,7 @@ package body Partoe.DOM is
      (Document : in out Partoe_Doc_Loader;
       Tag_Name : String)
    is
-      use Ada.Strings.Unbounded;
-      pragma Assert (Document.Current_Node.Name = Tag_Name);
+      pragma Assert (Document.Current_Node.Has_Name (Tag_Name));
    begin
       Document.Current_Node := Document.Current_Node.Parent;
    end On_Close_Tag;
@@ -233,7 +344,7 @@ package body Partoe.DOM is
       Text     : in     String)
    is
    begin
-      Document.Current_Node.Text :=
+      Document.Current_Node.Element_Text :=
         Ada.Strings.Unbounded.To_Unbounded_String (Text);
    end On_Inline_Text;
 
@@ -251,10 +362,42 @@ package body Partoe.DOM is
       New_Node.Line := Document.Current_Line;
       New_Node.Col  := Document.Current_Column;
       New_Node.Parent := Document.Current_Node;
-      New_Node.Name := Ada.Strings.Unbounded.To_Unbounded_String (Tag_Name);
+      New_Node.Element_Name :=
+        Ada.Strings.Unbounded.To_Unbounded_String (Tag_Name);
       Document.Current_Node.Child_Nodes.Append (New_Node);
       Document.Current_Node := New_Node;
    end On_Open_Tag;
+
+   ---------------
+   -- Outer_XML --
+   ---------------
+
+   function Outer_XML
+     (Node : not null access Root_Partoe_Node)
+      return String
+   is
+
+      function Attributes (Start : Positive) return String
+      is (if Start <= Node.Attribute_Count
+          then " " & Node.Attribute (Start).Name
+          & "=""" & Node.Attribute (Start).Text & """"
+          & Attributes (Start + 1)
+          else "");
+
+      function Child_Nodes (Start : Positive) return String
+      is (if Start <= Node.Child_Count
+          then Node.Child (Start).Outer_XML & Child_Nodes (Start + 1)
+          else "");
+
+      function Open_Tag return String
+      is ("<" & Node.Name & Attributes (1) & ">");
+
+      function Close_Tag return String
+      is ("</" & Node.Name & ">");
+
+   begin
+      return Open_Tag & Child_Nodes (1) & Node.Text & Close_Tag;
+   end Outer_XML;
 
    -----------------
    -- Select_Node --
@@ -317,9 +460,9 @@ package body Partoe.DOM is
    -- Text --
    ----------
 
-   function Text (Element : Root_Partoe_Element) return String is
+   function Text (Element : Root_Partoe_Element'Class) return String is
    begin
-      return Ada.Strings.Unbounded.To_String (Element.Text);
+      return Ada.Strings.Unbounded.To_String (Element.Element_Text);
    end Text;
 
 end Partoe.DOM;
