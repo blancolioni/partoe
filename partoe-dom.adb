@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
 with Partoe;
@@ -7,8 +8,9 @@ package body Partoe.DOM is
    type Partoe_Doc_Loader is
      new Partoe.Partoe_Document with
       record
-         Doc               : Partoe_Document;
-         Current_Node      : Partoe_Node;
+         Doc          : Partoe_Document;
+         Current_Node : Partoe_Node;
+         File_Path    : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    overriding procedure On_Open_Tag
@@ -285,7 +287,12 @@ package body Partoe.DOM is
 
    function Load (Path : String) return Partoe_Document is
       Doc : Partoe_Doc_Loader;
+      Containing_Path : constant String :=
+                          Ada.Directories.Containing_Directory (Path);
    begin
+      Doc.File_Path :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          (Containing_Path);
       Doc.Doc := new Root_Partoe_Document;
       Doc.Current_Node := Partoe_Node (Doc.Doc);
 
@@ -316,7 +323,8 @@ package body Partoe.DOM is
    begin
       Document.Current_Node.Attributes.Append
         (new Root_Partoe_Attribute'
-           (Document.Current_Line,
+           (Document.File_Path,
+            Document.Current_Line,
             Document.Current_Column,
             To_Unbounded_String (Attribute_Name),
             To_Unbounded_String (Attribute_Value)));
@@ -359,6 +367,7 @@ package body Partoe.DOM is
       New_Node : constant Partoe_Node :=
                    new Root_Partoe_Node;
    begin
+      New_Node.File := Document.File_Path;
       New_Node.Line := Document.Current_Line;
       New_Node.Col  := Document.Current_Column;
       New_Node.Parent := Document.Current_Node;
