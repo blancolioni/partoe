@@ -9,6 +9,7 @@ package Partoe.DOM is
 
    function Name (Element : Root_Partoe_Element) return String;
    function Text (Element : Root_Partoe_Element) return String;
+   function File_Path (Element : Root_Partoe_Element) return String;
 
    type Root_Partoe_Attribute is new Root_Partoe_Element with private;
 
@@ -74,11 +75,15 @@ private
 
    type Root_Partoe_Element is abstract tagged
       record
+         File : Ada.Strings.Unbounded.Unbounded_String;
          Line : Natural;
          Col  : Natural;
          Name : Ada.Strings.Unbounded.Unbounded_String;
          Text : Ada.Strings.Unbounded.Unbounded_String;
       end record;
+
+   function File_Path (Element : Root_Partoe_Element) return String
+   is (Ada.Strings.Unbounded.To_String (Element.File));
 
    type Root_Partoe_Attribute is new Root_Partoe_Element with null record;
 
