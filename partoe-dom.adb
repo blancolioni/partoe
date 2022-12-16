@@ -220,7 +220,8 @@ package body Partoe.DOM is
    is
    begin
       return Node : constant Partoe_Node := new Root_Partoe_Node'
-        (Line         => 0,
+        (File         => <>,
+         Line         => 0,
          Col          => 0,
          Element_Name => Ada.Strings.Unbounded.To_Unbounded_String (Name),
          Element_Text => Ada.Strings.Unbounded.Null_Unbounded_String,
@@ -241,7 +242,8 @@ package body Partoe.DOM is
    begin
       return Attribute : constant Partoe_Attribute :=
         new Root_Partoe_Attribute'
-          (Line         => 0,
+          (File         => <>,
+           Line         => 0,
            Col          => 0,
            Element_Name => Ada.Strings.Unbounded.To_Unbounded_String (Name),
            Element_Text => Ada.Strings.Unbounded.To_Unbounded_String (Value));
