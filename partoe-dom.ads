@@ -33,6 +33,8 @@ package Partoe.DOM is
      (Name : String)
       return Partoe_Node;
 
+   function Parent (This : Root_Partoe_Node'Class) return Partoe_Node;
+
    function Child_Count (Element : Root_Partoe_Node) return Natural;
    function Child (Element : Root_Partoe_Node;
                    Index   : Positive)
@@ -132,6 +134,9 @@ private
          Attributes  : Partoe_Attribute_Vectors.Vector;
          Child_Nodes : Partoe_Node_Vectors.Vector;
       end record;
+
+   function Parent (This : Root_Partoe_Node'Class) return Partoe_Node
+   is (This.Parent);
 
    type Root_Partoe_Document is new Root_Partoe_Node with null record;
 
